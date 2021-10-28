@@ -1,48 +1,14 @@
-import AgoraRTC, {
-  ClientConfig,
-  IAgoraRTCClient,
-  ICameraVideoTrack,
-  IMicrophoneAudioTrack,
-  IRemoteAudioTrack,
-  IRemoteVideoTrack,
-} from 'agora-rtc-sdk-ng';
+import AgoraRTC, { IAgoraRTCClient, ICameraVideoTrack, IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng';
 
 import { shallowRef, shallowReactive, watchEffect } from 'vue';
-
-export interface AgoraConfig {
-  appId: string;
-  clientOptions?: ClientConfig;
-}
-
-interface AVTrack {
-  video?: IRemoteVideoTrack;
-  audio?: IRemoteAudioTrack;
-}
-
-interface LocalTrack<T> {
-  readonly isLoading?: true;
-  readonly error?: Error;
-  readonly track?: T;
-}
+import { AgoraConfig, LocalTrack, ConnectionResult, ConnectionStatus } from './interfaces';
 
 let agoraConfig: AgoraConfig | undefined = undefined;
 export function init(config: AgoraConfig) {
   agoraConfig = config;
 }
 
-export interface ConnectionResult {
-  readonly client: IAgoraRTCClient;
-  channel?: string;
-  remoteTrackByUid: { [uid: string]: AVTrack };
-}
-export interface ConnectionStatus {
-  isLoading?: true;
-  isConnected?: true;
-}
-
-export function connect(
-  configFn: () => { channel: string; token: string } | undefined
-) {
+export function connect(configFn: () => { channel: string; token: string } | undefined) {
   if (!agoraConfig) {
     throw new Error('Agora not configured');
   }
@@ -51,7 +17,7 @@ export function connect(
     agoraConfig.clientOptions || {
       mode: 'rtc',
       codec: 'vp8',
-    }
+    },
   );
   const connectionResult = shallowRef<ConnectionResult>({
     remoteTrackByUid: {},
@@ -82,11 +48,10 @@ export function connect(
   });
 
   client.on('user-joined', (user) => {
-    connectionResult.value.remoteTrackByUid[user.uid.toString()] =
-      shallowReactive({
-        video: undefined,
-        audio: undefined,
-      });
+    connectionResult.value.remoteTrackByUid[user.uid.toString()] = shallowReactive({
+      video: undefined,
+      audio: undefined,
+    });
   });
 
   client.on('user-left', (user) => {
@@ -97,24 +62,20 @@ export function connect(
     void (async () => {
       await client.subscribe(user, mediaType);
       if (mediaType === 'audio') {
-        connectionResult.value.remoteTrackByUid[user.uid.toString()].audio =
-          user.audioTrack;
+        connectionResult.value.remoteTrackByUid[user.uid.toString()].audio = user.audioTrack;
       }
       if (mediaType === 'video') {
-        connectionResult.value.remoteTrackByUid[user.uid.toString()].video =
-          user.videoTrack;
+        connectionResult.value.remoteTrackByUid[user.uid.toString()].video = user.videoTrack;
       }
     })();
   });
 
   client.on('user-unpublished', (user, mediaType) => {
     if (mediaType === 'audio') {
-      connectionResult.value.remoteTrackByUid[user.uid.toString()].audio =
-        undefined;
+      connectionResult.value.remoteTrackByUid[user.uid.toString()].audio = undefined;
     }
     if (mediaType === 'video') {
-      connectionResult.value.remoteTrackByUid[user.uid.toString()].video =
-        undefined;
+      connectionResult.value.remoteTrackByUid[user.uid.toString()].video = undefined;
     }
   });
 
@@ -148,10 +109,7 @@ export function useConnectionState(clientFn: () => IAgoraRTCClient) {
   return connectionState;
 }
 
-export function useLocalAudioTrack(
-  client: IAgoraRTCClient,
-  enabledFn: () => boolean
-) {
+export function useLocalAudioTrack(client: IAgoraRTCClient, enabledFn: () => boolean) {
   const result = shallowRef<LocalTrack<IMicrophoneAudioTrack>>();
   watchEffect((invalidate) => {
     const enabled = enabledFn();
@@ -174,10 +132,7 @@ export function useLocalAudioTrack(
   return result;
 }
 
-export function useLocalVideoTrack(
-  client: IAgoraRTCClient,
-  enabledFn: () => boolean
-) {
+export function useLocalVideoTrack(client: IAgoraRTCClient, enabledFn: () => boolean) {
   const result = shallowRef<LocalTrack<ICameraVideoTrack>>();
   watchEffect((invalidate) => {
     const enabled = enabledFn();
