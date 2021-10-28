@@ -1,9 +1,3 @@
----
-title: Agora.ts
-created: '2021-10-18T15:47:53.586Z'
-modified: '2021-10-18T15:57:53.365Z'
----
-
 # Agora.ts
 
 The agora-vue library provides hooks for making Agora reactive with vue. It parses and wraps the data into reactive variables.
