@@ -1,6 +1,6 @@
 {
   "name": "agora-vue",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Library for using vue hooks with the Agora library",
   "main": "src.js",
   "scripts": {
